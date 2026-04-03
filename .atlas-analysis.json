@@ -1,0 +1,109 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Summarize",
+  "projectDescription": "A Go CLI utility that recursively scans a project directory and consolidates source files into a single Markdown summary, with an optional interactive AI chat session powered by Ollama or other LLM providers.",
+  "theme": "palm",
+  "primaryColor": "#f76040",
+  "lightColor": "#13c5be",
+  "darkColor": "#a35cfb",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Usage",
+            "pages": [
+              "usage/cli-flags",
+              "usage/environment-variables",
+              "usage/config-file"
+            ]
+          },
+          {
+            "group": "AI Chat",
+            "pages": [
+              "ai/overview",
+              "ai/providers",
+              "ai/configuration"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/makefile-integration",
+              "guides/filtering-files",
+              "guides/output-formats",
+              "guides/performance-tuning"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/default-includes",
+              "reference/default-excludes",
+              "reference/contributing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Recursive directory scanning with concurrent file processing",
+    "Configurable include/exclude file extension lists",
+    "Path substring skip filters to avoid unwanted directories",
+    "Multiple output modes: file write, STDOUT print, JSON, gzip compression",
+    "Interactive TUI AI chat session (via Bubble Tea) using the generated summary as context",
+    "Support for multiple AI providers: Ollama (default), OpenAI, Claude",
+    "YAML/JSON config file support via figtree",
+    "Environment variable overrides for all major settings",
+    "Cross-platform builds (macOS, Linux, Windows)"
+  ],
+  "publicApiSurface": [
+    "summarize (binary entry point)",
+    "-d <path>: source directory",
+    "-o <path>: output directory",
+    "-f <filename>: output filename",
+    "-i <extensions>: include extensions (comma-separated)",
+    "-x <extensions>: exclude extensions (comma-separated)",
+    "-s <substrings>: skip path substrings (comma-separated)",
+    "-print: print summary to STDOUT",
+    "-write: write summary to file",
+    "-gz: gzip compress output",
+    "-json: JSON output format",
+    "-max <int64>: maximum output file size in bytes",
+    "-mf <int>: max concurrent files (default 369)",
+    "-ndf: include dotfile directories",
+    "-debug: enable debug logging",
+    "-v: show version",
+    "-ai: enable AI features",
+    "-provider <string>: AI provider (ollama, openai, claude)",
+    "-model <string>: AI model name",
+    "-chat: start interactive AI chat session after summarizing",
+    "SUMMARIZE_CONFIG_FILE: path to config file",
+    "SUMMARIZE_ALWAYS_PRINT: always print to STDOUT",
+    "SUMMARIZE_ALWAYS_WRITE: always write to file",
+    "SUMMARIZE_ALWAYS_JSON: always use JSON output",
+    "SUMMARIZE_ALWAYS_COMPRESS: always gzip compress",
+    "SUMMARIZE_IGNORE_CONTAINS: additional path substrings to skip",
+    "SUMMARIZE_INCLUDE_EXT: additional extensions to include",
+    "SUMMARIZE_EXCLUDE_EXT: additional extensions to exclude",
+    "SUMMARIZE_AI_PROVIDER: AI provider override",
+    "SUMMARIZE_AI_MODEL: AI model override",
+    "SUMMARIZE_AI_API_KEY: API key for non-Ollama providers",
+    "SUMMARIZE_AI_MAX_TOKENS: max tokens per AI response",
+    "SUMMARIZE_AI_SEED: AI seed value",
+    "SUMMARIZE_AI_MEMORY: AI memory context size",
+    "SUMMARIZE_AI_ENABLE_CACHE: enable LLM response caching",
+    "SUMMARIZE_AI_GLOBAL_TIMEOUT: AI request timeout",
+    "SUMMARIZE_DISABLE_AI: disable AI features"
+  ]
+}

@@ -1,0 +1,124 @@
+---
+title: "Config file"
+description: "Store summarize settings in a YAML or JSON config file"
+---
+
+A config file lets you persist a full set of flags for a project without typing them on every invocation. The file is loaded by [figtree](https://github.com/andreimerlescu/figtree) before CLI flags are parsed.
+
+## Pointing to a config file
+
+Set the `SUMMARIZE_CONFIG_FILE` environment variable to the path of your config file. If the variable is not set, `summarize` looks for `./config.yaml` in the current working directory.
+
+```bash
+export SUMMARIZE_CONFIG_FILE=/home/user/work/summarize.config.yaml
+summarize
+```
+
+**Supported formats:** YAML, JSON, INI.
+
+---
+
+## Config file format
+
+Config keys match the CLI flag names exactly — use the single-letter or full-name form as defined in the source (e.g., `d`, `o`, `i`, `model`, `provider`).
+
+<Tabs>
+  <Tab title="JSON">
+    ```json summarize.config.json
+    {
+      "i": "go,sh,ts",
+      "d": "/home/user/work/project",
+      "o": "/home/user/summaries/project"
+    }
+    ```
+  </Tab>
+  <Tab title="YAML">
+    ```yaml summarize.config.yaml
+    d: /home/user/work/project
+    o: /home/user/summaries/project
+    i: go,sh,ts
+    ```
+  </Tab>
+</Tabs>
+
+You can include any flag that `summarize` accepts. A more complete example:
+
+<Tabs>
+  <Tab title="JSON">
+    ```json summarize.config.json
+    {
+      "d": "/home/user/work/project",
+      "o": "/home/user/summaries/project",
+      "i": "go,ts,sh,py",
+      "write": true,
+      "gz": true,
+      "provider": "openai",
+      "model": "gpt-4o",
+      "max-tokens": 4096
+    }
+    ```
+  </Tab>
+  <Tab title="YAML">
+    ```yaml summarize.config.yaml
+    d: /home/user/work/project
+    o: /home/user/summaries/project
+    i: go,ts,sh,py
+    write: true
+    gz: true
+    provider: openai
+    model: gpt-4o
+    max-tokens: 4096
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Switching between configs
+
+Use `SUMMARIZE_CONFIG_FILE` to switch between project-specific configs on the fly:
+
+```bash
+export SUMMARIZE_CONFIG_FILE=/home/user/work/summarize.config.yaml
+cd ~/work/project
+summarize
+
+unset SUMMARIZE_CONFIG_FILE
+cd ~/work/anotherProject
+summarize -d anotherProject -o /home/user/summaries/anotherProject
+```
+
+---
+
+## Step-by-step: setting up a project config
+
+<Steps>
+  <Step title="Create the config file">
+    Create a config file at the root of your project:
+
+    ```yaml summarize.config.yaml
+    d: .
+    o: ./summaries
+    i: go,ts,sh
+    write: true
+    ```
+  </Step>
+  <Step title="Set the environment variable">
+    Point `summarize` to your config file:
+
+    ```bash
+    export SUMMARIZE_CONFIG_FILE=$(pwd)/summarize.config.yaml
+    ```
+  </Step>
+  <Step title="Run summarize">
+    ```bash
+    summarize
+    ```
+
+    The binary reads the config file and applies all settings before processing CLI flags.
+  </Step>
+</Steps>
+
+<Tip>
+  Commit a `summarize.config.yaml` at the root of each project and document it in the repo's README. Team members can then run `export SUMMARIZE_CONFIG_FILE=$(pwd)/summarize.config.yaml` once and use `summarize` without any additional flags. Add the `summaries/` output directory to `.gitignore` and `.dockerignore` to avoid committing generated files.
+</Tip>

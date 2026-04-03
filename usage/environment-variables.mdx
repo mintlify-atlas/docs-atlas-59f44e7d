@@ -1,0 +1,111 @@
+---
+title: "Environment variables"
+description: "Configure summarize behavior with environment variables"
+---
+
+Environment variables let you set persistent defaults without repeating flags on every invocation. They are read at startup before CLI flags are parsed, so a CLI flag always takes precedence over the corresponding environment variable.
+
+## Quick example
+
+```bash
+export SUMMARIZE_ALWAYS_PRINT=true
+export SUMMARIZE_AI_PROVIDER=openai
+export SUMMARIZE_AI_API_KEY=sk-...
+summarize
+```
+
+---
+
+## Output behavior
+
+<ParamField path="SUMMARIZE_CONFIG_FILE" type="string" default="./config.yaml">
+  Path to a YAML, JSON, or INI config file loaded by [figtree](https://github.com/andreimerlescu/figtree). See [Config file](/usage/config-file) for format details.
+</ParamField>
+
+<ParamField path="SUMMARIZE_ALWAYS_PRINT" type="string (bool)" default="false">
+  When set to `"true"` or `"TRUE"`, permanently enables the `-print` flag so the summary is always written to STDOUT.
+</ParamField>
+
+<ParamField path="SUMMARIZE_ALWAYS_WRITE" type="string (bool)" default="false">
+  When set to `"true"` or `"TRUE"`, permanently enables the `-write` flag so the summary is always written to disk.
+</ParamField>
+
+<ParamField path="SUMMARIZE_ALWAYS_JSON" type="string (bool)" default="false">
+  When set to `"true"` or `"TRUE"`, permanently enables the `-json` flag so output is always rendered as JSON.
+</ParamField>
+
+<ParamField path="SUMMARIZE_ALWAYS_COMPRESS" type="string (bool)" default="false">
+  When set to `"true"` or `"TRUE"`, permanently enables the `-gz` flag so output is always gzip-compressed. Appends `.gz` to the output filename.
+</ParamField>
+
+---
+
+## File filtering
+
+<Note>
+  `SUMMARIZE_IGNORE_CONTAINS`, `SUMMARIZE_INCLUDE_EXT`, and `SUMMARIZE_EXCLUDE_EXT` are **appended** to the built-in default lists — they do not replace them. Use the `-s`, `-i`, and `-x` CLI flags if you need to override the defaults entirely.
+</Note>
+
+<ParamField path="SUMMARIZE_IGNORE_CONTAINS" type="string (comma-separated list)">
+  Additional path substrings to skip. Entries are appended to the built-in `defaultAvoid` list. Any scanned path that contains one of these substrings is skipped entirely.
+
+  Default built-in values include: `.min.js`, `.min.css`, `.git/`, `.svn/`, `.vscode/`, `.idea/`, `logs/`, `secrets/`, `.venv/`, `/site-packages`, `.terraform/`, `summaries/`, `node_modules/`, `/tmp`, `tmp/`.
+
+  See [Default excludes](/reference/default-excludes) for the complete list.
+</ParamField>
+
+<ParamField path="SUMMARIZE_INCLUDE_EXT" type="string (comma-separated list)">
+  Additional file extensions to include in the summary. Entries are appended to the built-in `defaultInclude` list.
+
+  Default built-in values: `go`, `ts`, `tf`, `sh`, `py`, `js`, `Makefile`, `mod`, `Dockerfile`, `dockerignore`, `gitignore`, `esconfigs`, `md`.
+
+  See [Default includes](/reference/default-includes) for the complete list.
+</ParamField>
+
+<ParamField path="SUMMARIZE_EXCLUDE_EXT" type="string (comma-separated list)">
+  Additional file extensions to exclude from the summary. Entries are appended to the built-in `defaultExclude` list.
+
+  Default built-in values include compressed archives (`gz`, `zip`, `tar`), binary executables (`exe`, `dll`, `so`), media files (`jpg`, `mp4`, `mp3`), and more.
+
+  See [Default excludes](/reference/default-excludes) for the complete list.
+</ParamField>
+
+---
+
+## AI settings
+
+<ParamField path="SUMMARIZE_DISABLE_AI" type="string (bool)" default="false">
+  When set to `"true"` or `"TRUE"`, disables all AI features. Equivalent to passing `-ai=false`.
+</ParamField>
+
+<ParamField path="SUMMARIZE_AI_PROVIDER" type="string" default="ollama">
+  AI provider to use. Overrides the `-provider` flag default. Supported values include `ollama`, `openai`, and `claude`. See [AI providers](/ai/providers).
+</ParamField>
+
+<ParamField path="SUMMARIZE_AI_MODEL" type="string" default="qwen3:8b">
+  AI model name passed to the configured provider. Overrides the `-model` flag default.
+</ParamField>
+
+<ParamField path="SUMMARIZE_AI_API_KEY" type="string" default="">
+  API key for non-Ollama providers. Overrides the `-api-key` flag default. Leave unset when using Ollama.
+</ParamField>
+
+<ParamField path="SUMMARIZE_AI_MAX_TOKENS" type="integer" default="3000">
+  Maximum number of tokens per AI response. Overrides the `-max-tokens` flag default.
+</ParamField>
+
+<ParamField path="SUMMARIZE_AI_SEED" type="integer" default="-1">
+  Seed value for AI requests. Use `-1` for non-deterministic responses. Overrides the `-seed` flag default.
+</ParamField>
+
+<ParamField path="SUMMARIZE_AI_MEMORY" type="integer" default="36963">
+  Context memory size passed to the AI provider. Overrides the `-memory` flag default.
+</ParamField>
+
+<ParamField path="SUMMARIZE_AI_ENABLE_CACHE" type="string (bool)" default="true">
+  When set to `"true"` or `"TRUE"`, enables LLM response caching. Overrides the `-caching` flag default.
+</ParamField>
+
+<ParamField path="SUMMARIZE_AI_GLOBAL_TIMEOUT" type="duration" default="77s">
+  Maximum time allowed for each AI request. Overrides the `-timeout` flag default. Accepts Go duration strings such as `"30s"` or `"2m"`.
+</ParamField>

@@ -1,0 +1,130 @@
+---
+title: "Makefile integration"
+description: "Add summarize to your project's Makefile for one-command summaries"
+---
+
+Adding a `summary` target to your project's Makefile lets you capture a full source snapshot with a single `make summary` command. The `summarize` binary is installed automatically if it isn't already on your `PATH`.
+
+## The summary target
+
+The `summarize` project's own Makefile includes this target verbatim:
+
+```makefile
+summary:
+	@if ! command -v summarize > /dev/null; then \
+		go install github.com/andreimerlescu/summarize@latest; \
+	fi
+	@summarize -i "go,Makefile,mod" -debug -print
+```
+
+### What each part does
+
+| Part | Purpose |
+|---|---|
+| `command -v summarize > /dev/null` | Checks whether `summarize` is already on `PATH` without printing output |
+| `go install github.com/andreimerlescu/summarize@latest` | Installs the latest release into `$GOBIN` if the binary is missing |
+| `-i "go,Makefile,mod"` | Restricts the summary to `.go` files, the `Makefile`, and `go.mod` only |
+| `-debug` | Prints extra progress lines to STDOUT so you can see which files are being processed |
+| `-print` | Writes the full summary to STDOUT instead of silently saving it to `summaries/` |
+
+<Tip>
+Run `make summary` before asking an AI a question about your codebase. You get an up-to-date, complete snapshot of every relevant source file that you can paste directly into the chat.
+</Tip>
+
+## Customizing for your project type
+
+Change the `-i` flag to match the extensions that matter for your stack. The value is a comma-separated list of extensions (no dots).
+
+<Tabs>
+  <Tab title="Go">
+    ```makefile
+    summary:
+    	@if ! command -v summarize > /dev/null; then \
+    		go install github.com/andreimerlescu/summarize@latest; \
+    	fi
+    	@summarize -i "go,mod,Makefile,Dockerfile"
+    ```
+    Captures all Go source files, the module manifest, the Makefile, and any Dockerfile in the tree.
+  </Tab>
+  <Tab title="TypeScript">
+    ```makefile
+    summary:
+    	@if ! command -v summarize > /dev/null; then \
+    		go install github.com/andreimerlescu/summarize@latest; \
+    	fi
+    	@summarize -i "ts,tsx,json,md"
+    ```
+    Captures TypeScript and TSX source files, JSON config files, and Markdown documentation.
+  </Tab>
+  <Tab title="Python">
+    ```makefile
+    summary:
+    	@if ! command -v summarize > /dev/null; then \
+    		go install github.com/andreimerlescu/summarize@latest; \
+    	fi
+    	@summarize -i "py,toml,cfg,md"
+    ```
+    Captures Python source, `pyproject.toml`, `setup.cfg`, and any Markdown docs.
+  </Tab>
+</Tabs>
+
+## Writing to a file
+
+By default the target above uses `-print` to stream the summary to STDOUT. To save the summary to a timestamped file under `summaries/` instead, use `-write` and optionally customise the output path:
+
+```makefile
+APP_NAME := $(shell basename "$(shell realpath .)")
+
+summary:
+	@if ! command -v summarize > /dev/null; then \
+		go install github.com/andreimerlescu/summarize@latest; \
+	fi
+	@summarize \
+		-i "go,mod,Makefile,Dockerfile" \
+		-write \
+		-o summaries \
+		-f "$(APP_NAME).summary.md"
+	@echo "Summary written to summaries/$(APP_NAME).summary.md"
+```
+
+<Steps>
+  <Step title="Run the target">
+    ```bash
+    make summary
+    ```
+  </Step>
+  <Step title="Locate the file">
+    The output lands in `./summaries/` with the filename you specified via `-f`. Without `-f`, the default is a timestamped name like `summary.2025.07.29.08.59.03.UTC.md`.
+  </Step>
+  <Step title="Use with an AI">
+    ```bash
+    cat summaries/myapp.summary.md | pbcopy   # macOS — paste into any AI chat
+    ```
+  </Step>
+</Steps>
+
+<Note>
+Add `summaries/` to both `.gitignore` and `.dockerignore`. Generated summaries can be large and contain your full source code — they are not meant to be committed or shipped inside a container image.
+
+```gitignore
+# .gitignore
+summaries/
+```
+</Note>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="CLI flags reference" href="/usage/cli-flags">
+    Every flag accepted by the `summarize` binary
+  </Card>
+  <Card title="Environment variables" href="/usage/environment-variables">
+    Persist default behaviour without repeating flags
+  </Card>
+  <Card title="Filtering files" href="/guides/filtering-files">
+    Fine-tune which files are included in the summary
+  </Card>
+  <Card title="Output formats" href="/guides/output-formats">
+    Write to file, print to STDOUT, use JSON, or compress with gzip
+  </Card>
+</CardGroup>

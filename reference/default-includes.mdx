@@ -1,0 +1,90 @@
+---
+title: "Default include list"
+description: "File extensions included in summaries by default"
+---
+
+When you run `summarize` without any `-i` flag, it uses `useExpanded` as the default include sentinel, which resolves to the extended default include list. These are the extensions it will process.
+
+## Default extensions
+
+| Extension | Language/Type |
+|-----------|--------------|
+| `go` | Go source files |
+| `ts` | TypeScript |
+| `tf` | Terraform |
+| `sh` | Shell scripts |
+| `py` | Python |
+| `js` | JavaScript |
+| `Makefile` | Makefiles |
+| `mod` | Go module files |
+| `Dockerfile` | Docker build files |
+| `dockerignore` | Docker ignore files |
+| `gitignore` | Git ignore files |
+| `esconfigs` | ESLint/editor configs |
+| `md` | Markdown files |
+
+These come from `extendedDefaultInclude` in `var.go`:
+
+```go
+extendedDefaultInclude = []string{
+    "go", "ts", "tf", "sh", "py", "js", "Makefile", "mod", "Dockerfile", "dockerignore", "gitignore", "esconfigs", "md",
+}
+```
+
+## The `useExpanded` sentinel
+
+The internal `defaultInclude` variable is initialized to `["useExpanded"]`. When the runtime sees this value it substitutes the full `extendedDefaultInclude` list above. You can invoke the same substitution explicitly with the `-i` flag:
+
+```bash
+summarize -i useExpanded
+```
+
+This is equivalent to running `summarize` with no `-i` flag at all.
+
+## Adding or replacing extensions
+
+<Note>
+Using `-i` as a CLI flag **replaces** the default list entirely. Setting `SUMMARIZE_INCLUDE_EXT` as an environment variable **appends** to the defaults instead.
+</Note>
+
+### Replace defaults with `-i`
+
+Pass a comma-separated list to `-i` to replace the default include list with exactly those extensions:
+
+```bash
+summarize -i go,ts,proto
+```
+
+Only `go`, `ts`, and `proto` files will be included — the rest of the defaults are dropped.
+
+### Append via environment variable
+
+Set `SUMMARIZE_INCLUDE_EXT` to add extensions on top of the defaults without overriding them:
+
+```bash
+export SUMMARIZE_INCLUDE_EXT=proto,graphql
+summarize
+```
+
+The final include list becomes the `extendedDefaultInclude` extensions **plus** `proto` and `graphql`.
+
+<Tip>
+Use `SUMMARIZE_INCLUDE_EXT` in a shell profile or CI environment when you always need extra extensions without having to retype the flag.
+</Tip>
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Default exclude list" href="/reference/default-excludes">
+    Extensions and path patterns excluded by default.
+  </Card>
+  <Card title="CLI flags" href="/usage/cli-flags">
+    Full reference for all command-line flags including `-i`, `-x`, and `-s`.
+  </Card>
+  <Card title="Environment variables" href="/usage/environment-variables">
+    All supported environment variables including `SUMMARIZE_INCLUDE_EXT`.
+  </Card>
+  <Card title="Filtering files" href="/guides/filtering-files">
+    Practical guide to combining include, exclude, and skip rules.
+  </Card>
+</CardGroup>

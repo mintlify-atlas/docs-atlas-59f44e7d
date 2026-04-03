@@ -1,0 +1,140 @@
+---
+title: "Contributing"
+description: "How to contribute to summarize"
+---
+
+`summarize` is open source under the MIT License. Contributions — bug fixes, new features, documentation improvements, and platform support — are welcome.
+
+- **Repository**: [github.com/andreimerlescu/summarize](https://github.com/andreimerlescu/summarize)
+- **Module**: `github.com/andreimerlescu/summarize`
+- **Current version**: `v1.1.1`
+- **License**: MIT
+
+<Note>
+The project requires Go 1.24 or later. Make sure your local Go installation is up to date before building.
+</Note>
+
+## Getting started
+
+<Steps>
+  <Step title="Fork the repository">
+    Go to [github.com/andreimerlescu/summarize](https://github.com/andreimerlescu/summarize) and click **Fork** to create your own copy.
+  </Step>
+
+  <Step title="Clone your fork">
+    ```bash
+    git clone https://github.com/<your-username>/summarize.git
+    cd summarize
+    ```
+  </Step>
+
+  <Step title="Build the project">
+    ```bash
+    go build ./...
+    ```
+
+    This compiles the binary and verifies all dependencies resolve correctly.
+  </Step>
+
+  <Step title="Run the tests">
+    ```bash
+    make test
+    ```
+
+    This runs `./test.sh`. Ensure all tests pass before making changes.
+  </Step>
+
+  <Step title="Make your changes">
+    Edit source files, add tests, and verify the build still passes:
+
+    ```bash
+    go build ./...
+    make test
+    ```
+  </Step>
+
+  <Step title="Commit and open a pull request">
+    Push your branch to your fork and open a pull request against the `main` branch of the upstream repository. Describe what you changed and why.
+  </Step>
+</Steps>
+
+## Build targets
+
+The `Makefile` provides targets for cross-platform builds and common development tasks.
+
+| Target | Description |
+|--------|-------------|
+| `make all` | Build for all supported platforms and install |
+| `make darwin-amd64` | Build for macOS Intel (amd64) |
+| `make darwin-arm64` | Build for macOS Apple Silicon (arm64) |
+| `make linux-amd64` | Build for Linux x86-64 |
+| `make linux-arm64` | Build for Linux ARM64 |
+| `make windows-amd64` | Build for Windows x86-64 |
+| `make install` | Copy the platform binary to `GOBIN` |
+| `make summary` | Generate a summary of the project source using `summarize` itself |
+| `make clean` | Remove the `bin/` build artifacts directory |
+| `make test` | Run the test suite via `./test.sh` |
+
+Example: build only the Linux amd64 binary:
+
+```bash
+make linux-amd64
+# outputs: bin/summarize-linux-amd64
+```
+
+Example: install to your Go bin path:
+
+```bash
+make install
+```
+
+The `install` target copies the binary built for your current `GOOS`/`GOARCH` to `$(go env GOBIN)/summarize`.
+
+## Project structure
+
+```
+summarize/
+├── main.go          # Entry point
+├── const.go         # All constants (flag names, env var names)
+├── var.go           # Default include/exclude/avoid lists
+├── var_funcs.go     # Shared function variables
+├── configure.go     # Flag and config parsing
+├── process.go       # File scanning and processing
+├── simplify.go      # String slice deduplication
+├── ai.go            # AI provider integration
+├── chat.go          # AI chat interface
+├── env.go           # Environment variable loading
+├── type.go          # Type definitions
+├── type_funcs.go    # Type methods
+├── reflect.go       # Reflection helpers
+├── internal.go      # Internal utilities
+├── gz.go            # Gzip compression
+├── version.go       # Version output
+├── Makefile         # Build targets
+└── go.mod           # Module: github.com/andreimerlescu/summarize
+```
+
+## License
+
+MIT License — Copyright 2025 Andrei Raven Merlescu.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: the above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+The software is provided "as is", without warranty of any kind. See the [LICENSE](https://github.com/andreimerlescu/summarize/blob/main/LICENSE) file for the full text.
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Installation" href="/installation">
+    Install `summarize` via `go install` or from a pre-built binary.
+  </Card>
+  <Card title="Makefile integration" href="/guides/makefile-integration">
+    Add a `make summary` target to your own projects.
+  </Card>
+  <Card title="Default include list" href="/reference/default-includes">
+    Extensions included in summaries by default.
+  </Card>
+  <Card title="Default exclude list" href="/reference/default-excludes">
+    Extensions and path patterns excluded by default.
+  </Card>
+</CardGroup>

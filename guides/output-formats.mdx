@@ -1,0 +1,190 @@
+---
+title: "Output formats"
+description: "Write to file, print to STDOUT, use JSON output, or compress with gzip"
+---
+
+`summarize` supports four output modes. They can be combined, and each mode can be made the permanent default through a corresponding environment variable.
+
+## Default behaviour
+
+When you run `summarize` without any output flags, the summary **is written to a file** and a success message is printed to STDOUT:
+
+```
+Summary generated: summaries/summary.2025.07.29.08.59.03.UTC.md
+```
+
+The output directory is created automatically if it does not exist.
+
+<Tabs>
+  <Tab title="File output (-write)">
+    ### Writing to a file
+
+    Use `-write` to explicitly write the summary to disk. Without `-write`, the file is still written unless you pass `-print` or `-json` (which skip the file write and exit after printing).
+
+    **Default output path:** `./summaries/summary.YYYY.MM.DD.HH.MM.SS.UTC.md`
+
+    The timestamp uses Go's reference time format: `2006.01.02.15.04.05.UTC`
+
+    ```bash
+    # Write to default location
+    summarize -write
+
+    # Customise the output directory
+    summarize -write -o /tmp/project-summaries
+
+    # Customise the filename
+    summarize -write -f myproject.md
+
+    # Customise both
+    summarize -write -o /tmp/project-summaries -f myproject.md
+    ```
+
+    **Make it permanent:**
+
+    ```bash
+    export SUMMARIZE_ALWAYS_WRITE=true
+    summarize   # always writes to disk, no flag needed
+    ```
+
+    <Note>
+      Add `summaries/` to `.gitignore` so generated files are never committed. The directory is automatically excluded from summaries by the default skip list.
+    </Note>
+  </Tab>
+
+  <Tab title="STDOUT output (-print)">
+    ### Printing to STDOUT
+
+    Use `-print` to stream the full summary contents to STDOUT. No file is written and the process exits after printing.
+
+    ```bash
+    # Print to terminal
+    summarize -print
+
+    # Copy to clipboard (macOS)
+    summarize -print | pbcopy
+
+    # Redirect to a temporary file
+    summarize -print > /tmp/context.md
+
+    # Pipe to a pager
+    summarize -print | less
+    ```
+
+    **Make it permanent:**
+
+    ```bash
+    export SUMMARIZE_ALWAYS_PRINT=true
+    summarize   # always prints to STDOUT
+    ```
+
+    `-print` and `-write` can be combined. When both are active the summary is written to the file **and** printed to STDOUT:
+
+    ```bash
+    summarize -print -write
+    ```
+  </Tab>
+
+  <Tab title="JSON output (-json)">
+    ### JSON output
+
+    Use `-json` to render the result as a JSON object to STDOUT. When combined with `-print`, the JSON object includes the `path`, `size`, and full `contents` of the summary. Without `-print`, only a completion message is emitted as JSON.
+
+    ```bash
+    # JSON completion message only
+    summarize -json
+
+    # Full summary as JSON (path + size + contents)
+    summarize -json -print
+    ```
+
+    **Example JSON output with `-json -print`:**
+
+    ```json
+    {
+      "path": "summaries/summary.2025.07.29.08.59.03.UTC.md",
+      "size": 48291,
+      "contents": "# Project Summary - summary.2025.07.29...\n..."
+    }
+    ```
+
+    **Example JSON output with `-json` only:**
+
+    ```json
+    {
+      "message": "Summary generated: summaries/summary.2025.07.29.08.59.03.UTC.md\n"
+    }
+    ```
+
+    **Make it permanent:**
+
+    ```bash
+    export SUMMARIZE_ALWAYS_JSON=true
+    summarize
+    ```
+  </Tab>
+
+  <Tab title="Gzip compression (-gz)">
+    ### Gzip compression
+
+    Use `-gz` to compress the summary with gzip before writing. The `.gz` extension is appended to the output filename automatically.
+
+    ```bash
+    # Write a compressed file
+    summarize -write -gz
+    # Output: summaries/summary.2025.07.29.08.59.03.UTC.md.gz
+
+    # Compress with a custom filename
+    summarize -write -gz -f myproject.md
+    # Output: summaries/myproject.md.gz
+    ```
+
+    **Make it permanent:**
+
+    ```bash
+    export SUMMARIZE_ALWAYS_COMPRESS=true
+    summarize -write
+    ```
+
+    <Note>
+      `-gz` applies only to file output. It has no effect when `-print` is the sole output mode because the raw bytes are streamed directly to STDOUT.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Combining modes
+
+| Flags | Behaviour |
+|---|---|
+| _(none)_ | Writes to file, prints success message |
+| `-write` | Writes to file, prints success message |
+| `-print` | Streams to STDOUT, no file written |
+| `-write -print` | Writes to file **and** streams to STDOUT |
+| `-write -gz` | Writes gzip-compressed file, prints success message |
+| `-json` | Writes to file, prints JSON success message |
+| `-json -print` | Streams full summary as JSON to STDOUT, no file written |
+
+## Environment variable reference
+
+| Variable | Effect |
+|---|---|
+| `SUMMARIZE_ALWAYS_WRITE` | Set `true` to always write to disk |
+| `SUMMARIZE_ALWAYS_PRINT` | Set `true` to always print to STDOUT |
+| `SUMMARIZE_ALWAYS_JSON` | Set `true` to always use JSON output |
+| `SUMMARIZE_ALWAYS_COMPRESS` | Set `true` to always gzip-compress the output |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="CLI flags reference" href="/usage/cli-flags">
+    Full reference for `-write`, `-print`, `-json`, `-gz`, `-o`, and `-f`
+  </Card>
+  <Card title="Environment variables" href="/usage/environment-variables">
+    Persist output behaviour without repeating flags
+  </Card>
+  <Card title="Makefile integration" href="/guides/makefile-integration">
+    Run `make summary` and pipe the output to an AI in one step
+  </Card>
+  <Card title="Performance tuning" href="/guides/performance-tuning">
+    Tune concurrency and output size limits for large projects
+  </Card>
+</CardGroup>

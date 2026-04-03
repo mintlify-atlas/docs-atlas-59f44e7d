@@ -1,0 +1,162 @@
+---
+title: "Default exclude list"
+description: "File extensions and path patterns excluded from summaries by default"
+---
+
+`summarize` maintains two built-in exclusion mechanisms: a list of file **extensions** to skip (`-x` / `SUMMARIZE_EXCLUDE_EXT`) and a list of path **substrings** to avoid (`-s` / `SUMMARIZE_IGNORE_CONTAINS`). Both default to `useExpanded`, which resolves to the extended lists below at runtime.
+
+<Warning>
+Passing `-x` as a CLI flag replaces the default list entirely. This removes **all** built-in safety exclusions — secrets, private keys, binaries, and more will be included unless you re-add them manually. Prefer `SUMMARIZE_EXCLUDE_EXT` to append to defaults instead.
+</Warning>
+
+## Default excluded extensions
+
+The `extendedDefaultExclude` list in `var.go` covers every category of non-source file that `summarize` ignores out of the box.
+
+<AccordionGroup>
+  <Accordion title="Compressed archives">
+    `7z`, `gz`, `xz`, `zst`, `zstd`, `bz`, `bz2`, `bzip2`, `zip`, `tar`, `rar`, `lz4`, `lzma`, `cab`, `arj`
+  </Accordion>
+
+  <Accordion title="Certificates and keys">
+    `crt`, `cert`, `cer`, `key`, `pub`, `asc`, `pem`, `p12`, `pfx`, `jks`, `keystore`, `id_rsa`, `id_dsa`, `id_ed25519`, `id_ecdsa`, `gpg`, `pgp`
+
+    These extensions frequently contain private keys, certificates, or other sensitive credentials. Excluding them prevents accidental leakage into a summary that may be shared with an AI provider.
+  </Accordion>
+
+  <Accordion title="Binaries and executables">
+    `exe`, `dll`, `so`, `dylib`, `bin`, `out`, `o`, `obj`, `a`, `lib`, `dSYM`, `class`, `pyc`, `pyo`, `__pycache__`, `jar`, `war`, `ear`, `apk`, `ipa`, `dex`, `odex`, `wasm`, `node`, `beam`, `elc`
+  </Accordion>
+
+  <Accordion title="System and disk images">
+    `iso`, `img`, `dmg`, `vhd`, `vdi`, `vmdk`, `qcow2`
+  </Accordion>
+
+  <Accordion title="Database files">
+    `db`, `sqlite`, `sqlite3`, `db3`, `mdb`, `accdb`, `sdf`, `ldb`
+  </Accordion>
+
+  <Accordion title="Log files">
+    `log`, `trace`, `dump`, `crash`
+  </Accordion>
+
+  <Accordion title="Images">
+    `jpg`, `jpeg`, `png`, `gif`, `bmp`, `tiff`, `tif`, `webp`, `ico`, `svg`, `heic`, `heif`, `raw`, `cr2`, `nef`, `dng`
+  </Accordion>
+
+  <Accordion title="Audio">
+    `mp3`, `wav`, `flac`, `aac`, `ogg`, `wma`, `m4a`, `opus`, `aiff`
+  </Accordion>
+
+  <Accordion title="Video">
+    `mp4`, `avi`, `mov`, `mkv`, `webm`, `flv`, `wmv`, `m4v`, `3gp`, `ogv`
+  </Accordion>
+
+  <Accordion title="Fonts">
+    `ttf`, `otf`, `woff`, `woff2`, `eot`, `fon`, `pfb`, `pfm`
+  </Accordion>
+
+  <Accordion title="Documents">
+    `pdf`, `doc`, `docx`, `xls`, `xlsx`, `ppt`, `pptx`, `odt`, `ods`, `odp`, `rtf`
+  </Accordion>
+
+  <Accordion title="IDE and editor artifacts">
+    `suo`, `sln`, `user`, `ncb`, `pdb`, `ipch`, `ilk`, `tlog`, `idb`, `aps`, `res`, `iml`, `idea`, `vscode`, `project`, `classpath`, `factorypath`, `prefs`, `vcxproj`, `vcproj`, `filters`, `xcworkspace`, `xcuserstate`, `xcscheme`, `pbxproj`, `DS_Store`, `Thumbs.db`, `desktop.ini`
+  </Accordion>
+
+  <Accordion title="Build and package manager artifacts">
+    `lock`, `sum`, `resolved`
+
+    Covers `package-lock.json`, `go.sum`, `yarn.lock`, and similar generated lockfiles.
+  </Accordion>
+
+  <Accordion title="Temporary and backup files">
+    `tmp`, `temp`, `swp`, `swo`, `bak`, `backup`, `orig`, `rej`, `patch`, `~`, `old`, `new`, `part`, `incomplete`
+  </Accordion>
+
+  <Accordion title="Generated source maps and bundles">
+    `map`, `min.js`, `min.css`, `bundle.js`, `bundle.css`, `chunk.js`
+  </Accordion>
+
+  <Accordion title="Data and cache files">
+    `dat`, `data`, `cache`, `pid`, `sock`, `pack`, `idx`, `rev`
+  </Accordion>
+
+  <Accordion title="Machine learning data">
+    `pickle`, `pkl`, `npy`, `npz`, `mat`, `rdata`, `rds`
+  </Accordion>
+</AccordionGroup>
+
+## Default avoided path substrings
+
+The `extendedDefaultAvoid` list in `var.go` contains substrings that, if found anywhere in a file's path, cause that file to be skipped. This is controlled by `-s` / `SUMMARIZE_IGNORE_CONTAINS`.
+
+| Substring | Skips |
+|-----------|-------|
+| `.min.js` | Minified JavaScript files |
+| `.min.css` | Minified CSS files |
+| `.git/` | Git repository internals |
+| `.svn/` | Subversion repository internals |
+| `.vscode/` | VS Code workspace settings |
+| `.vs/` | Visual Studio solution files |
+| `.idea/` | JetBrains IDE project files |
+| `logs/` | Log directories |
+| `secrets/` | Secrets directories |
+| `.venv/` | Python virtual environments |
+| `/site-packages` | Installed Python packages |
+| `.terraform/` | Terraform state and providers |
+| `summaries/` | The tool's own output directory |
+| `node_modules/` | Node.js dependencies |
+| `/tmp` | System temp directories |
+| `tmp/` | Local temp directories |
+
+## The `useExpanded` sentinel
+
+Both `defaultExclude` and `defaultAvoid` are initialized to `["useExpanded"]` in source. At runtime this is replaced with the full extended lists above. You can pass the sentinel explicitly to restore the defaults after using a flag:
+
+```bash
+# Restore full default exclude list explicitly
+summarize -x useExpanded
+
+# Restore full default avoid list explicitly
+summarize -s useExpanded
+```
+
+## Adding to exclusions
+
+### Append via environment variable (recommended)
+
+```bash
+# Add extensions to the exclude list without replacing defaults
+export SUMMARIZE_EXCLUDE_EXT=proto,graphql
+
+# Add path substrings to skip without replacing defaults
+export SUMMARIZE_IGNORE_CONTAINS=vendor/,generated/
+```
+
+### Replace with `-x` or `-s` flag
+
+```bash
+# Replace exclude list (drops all built-in exclusions)
+summarize -x proto,graphql
+
+# Replace avoid list (drops all built-in path filters)
+summarize -s vendor/,generated/
+```
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Default include list" href="/reference/default-includes">
+    Extensions included in summaries by default.
+  </Card>
+  <Card title="Filtering files" href="/guides/filtering-files">
+    Practical guide to combining include, exclude, and skip rules.
+  </Card>
+  <Card title="CLI flags" href="/usage/cli-flags">
+    Full reference for `-x`, `-s`, and related flags.
+  </Card>
+  <Card title="Environment variables" href="/usage/environment-variables">
+    All supported environment variables including `SUMMARIZE_EXCLUDE_EXT` and `SUMMARIZE_IGNORE_CONTAINS`.
+  </Card>
+</CardGroup>

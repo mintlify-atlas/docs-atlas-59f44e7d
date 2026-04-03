@@ -1,0 +1,138 @@
+---
+title: "CLI flags"
+description: "Every flag supported by the summarize binary"
+---
+
+All flags are passed directly to the `summarize` binary. Flags correspond to config file keys and can be overridden by environment variables where noted.
+
+## Usage examples
+
+```bash
+summarize -d ~/work/myproject -i go,ts -print
+summarize -d . -o /tmp/summaries -gz -write
+summarize -chat -model llama3:8b
+```
+
+---
+
+## File selection
+
+<ParamField path="-d" type="string" default=".">
+  Absolute or relative path of the directory to summarize. Validated as a readable directory at startup.
+</ParamField>
+
+<ParamField path="-i" type="list" default="go,ts,tf,sh,py,js,Makefile,mod,Dockerfile,dockerignore,gitignore,esconfigs,md">
+  Comma-separated list of file extensions to include in the summary. Values are merged with the built-in defaults; pass `useExpanded` to use the extended default set. See [Default includes](/reference/default-includes) for the full list.
+</ParamField>
+
+<ParamField path="-x" type="list" default="useExpanded">
+  Comma-separated list of file extensions to exclude. Merged with the built-in defaults. See [Default excludes](/reference/default-excludes) for the full list.
+</ParamField>
+
+<ParamField path="-s" type="list" default=".min.js,.min.css,.git/,.svn/,.vscode/,.vs/,.idea/,logs/,secrets/,.venv/,/site-packages,.terraform/,summaries/,node_modules/,/tmp,tmp/,logs/">
+  Comma-separated list of substrings. Any scanned path containing one of these substrings is skipped entirely.
+</ParamField>
+
+<ParamField path="-ndf" type="boolean" default="false">
+  **No Dot Files** mode. When `true`, any file whose name begins with `.` is skipped. By default (`false`), dotfiles are included in the scan alongside regular files.
+</ParamField>
+
+---
+
+## Output control
+
+<ParamField path="-o" type="string" default="./summaries">
+  Path of the directory where the summary file is written. The directory is created if it does not exist.
+</ParamField>
+
+<ParamField path="-f" type="string" default="summary.<timestamp>.UTC.md">
+  Filename for the output file inside the `-o` directory. Defaults to a timestamped name in the format `summary.2006.01.02.15.04.05.UTC.md`.
+</ParamField>
+
+<ParamField path="-print" type="boolean" default="false">
+  Print the generated summary to STDOUT instead of (or in addition to) writing it to disk. Can be permanently enabled with [`SUMMARIZE_ALWAYS_PRINT`](/usage/environment-variables).
+</ParamField>
+
+<ParamField path="-write" type="boolean" default="false">
+  Write the generated summary to the output file. Can be permanently enabled with [`SUMMARIZE_ALWAYS_WRITE`](/usage/environment-variables).
+</ParamField>
+
+<ParamField path="-json" type="boolean" default="false">
+  Render the output as JSON instead of Markdown. Can be permanently enabled with [`SUMMARIZE_ALWAYS_JSON`](/usage/environment-variables).
+</ParamField>
+
+<ParamField path="-gz" type="boolean" default="false">
+  Gzip-compress the output file. Appends `.gz` to the output filename. Can be permanently enabled with [`SUMMARIZE_ALWAYS_COMPRESS`](/usage/environment-variables).
+</ParamField>
+
+<ParamField path="-expand" type="boolean" default="false">
+  Show the expanded defaults menu at startup.
+</ParamField>
+
+<ParamField path="-v" type="boolean" default="false">
+  Print the current version of the `summarize` binary and exit.
+</ParamField>
+
+<ParamField path="-debug" type="boolean" default="false">
+  Enable debug mode. Writes additional diagnostic log statements to STDOUT alongside the normal output.
+</ParamField>
+
+---
+
+## Performance
+
+<ParamField path="-mf" type="integer" default="369">
+  Maximum number of files processed concurrently. Must be between `1` and `369`.
+</ParamField>
+
+<ParamField path="-max" type="integer (int64)" default="1776369">
+  Maximum size of the generated output file in bytes. Summarization stops once the file reaches this size. Must be between `369` and `369369369369`.
+</ParamField>
+
+---
+
+## AI options
+
+<Note>
+  AI features are enabled by default. Set `-ai=false` or the `SUMMARIZE_DISABLE_AI` environment variable to disable them. See [AI overview](/ai/overview) for a full walkthrough.
+</Note>
+
+<ParamField path="-ai" type="boolean" default="true">
+  Enable or disable AI features globally. Defaults to `true` unless `SUMMARIZE_DISABLE_AI` is set.
+</ParamField>
+
+<ParamField path="-provider" type="string" default="ollama">
+  AI provider to use. Supported values include `ollama`, `openai`, and `claude`. See [AI providers](/ai/providers).
+</ParamField>
+
+<ParamField path="-model" type="string" default="qwen3:8b">
+  AI model name to pass to the configured provider.
+</ParamField>
+
+<ParamField path="-max-tokens" type="integer" default="3000">
+  Maximum number of tokens per AI response. Must be between `-1` and `369369369369`.
+</ParamField>
+
+<ParamField path="-seed" type="integer" default="-1">
+  Seed value for the AI request. Use `-1` for a non-deterministic response. Must be between `-1` and `369369369369`.
+</ParamField>
+
+<ParamField path="-api-key" type="string" default="">
+  API key for non-Ollama providers such as OpenAI or Claude. Leave empty when using Ollama.
+</ParamField>
+
+<ParamField path="-memory" type="integer" default="36963">
+  Context memory size passed to the AI provider. Must be between `1` and `17369369`.
+</ParamField>
+
+<ParamField path="-caching" type="boolean" default="true">
+  Enable LLM response caching. Reuses cached responses for identical inputs to reduce latency and API costs.
+</ParamField>
+
+<ParamField path="-timeout" type="duration" default="77s">
+  Maximum time allowed for each AI request before it is cancelled.
+</ParamField>
+
+<ParamField path="-chat" type="boolean" default="false">
+  Start an interactive AI chat session using the generated summary as context. The session begins after the summary is produced.
+</ParamField>

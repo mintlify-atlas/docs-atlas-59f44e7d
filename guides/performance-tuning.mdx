@@ -1,0 +1,170 @@
+---
+title: "Performance tuning"
+description: "Tune concurrency and file size limits for large projects"
+---
+
+`summarize` is designed to handle large codebases efficiently. Two flags control the concurrency and output-size budget, and the underlying concurrency model is built on Go's runtime scheduler and a semaphore-based throttle.
+
+## Tuning parameters
+
+<AccordionGroup>
+  <Accordion title="Max concurrent files (-mf)">
+    Controls how many files are opened and processed simultaneously. `summarize` uses a semaphore (`sema.New`) to enforce this limit, so memory usage stays proportional to the concurrency level rather than the total number of files in the tree.
+
+    | Property | Value |
+    |---|---|
+    | Flag | `-mf` |
+    | Default | `369` |
+    | Valid range | `1` – `369` |
+
+    ```bash
+    # Use the default (suitable for most developer workstations)
+    summarize
+
+    # Reduce concurrency on memory-constrained machines
+    summarize -mf 50
+
+    # Single-threaded processing (useful for debugging)
+    summarize -mf 1
+    ```
+
+    <Note>
+      The default of 369 is intentional — it is a recurring theme in the `summarize` project's numeric constants. The validator in `configure.go` rejects any value outside the range 1–369, so you cannot exceed the default concurrency regardless of what you pass.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Max output size (-max)">
+    Sets the maximum size of the generated summary in bytes. Once the running total reaches this threshold, `summarize` stops appending files. Files that are already in flight when the limit is hit are dropped cleanly — no file is cut mid-way through.
+
+    | Property | Value |
+    |---|---|
+    | Flag | `-max` |
+    | Default | `1,776,369` bytes (~1.7 MB) |
+    | Valid range | `369` – `369,369,369,369` bytes |
+
+    ```bash
+    # Use the default (~1.7 MB)
+    summarize
+
+    # Increase the budget for a large monorepo (~10 MB)
+    summarize -max 10000000
+
+    # Small budget for a quick overview (~500 KB)
+    summarize -max 500000
+    ```
+
+    <Warning>
+      If your summary is getting truncated, you will see fewer files in the output than you expect. Increase `-max` or tighten your `-i` / `-s` filters to reduce the number of files included.
+    </Warning>
+
+    The validator in `configure.go` enforces the range:
+
+    ```go
+    figs = figs.WithValidator(kMaxOutputSize, figtree.AssureInt64InRange(369, 369_369_369_369))
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Concurrency model
+
+`summarize` uses a two-tier concurrency design to stay fast without overwhelming the operating system:
+
+<Steps>
+  <Step title="Directory walk">
+    `filepath.Walk` traverses the source directory sequentially, collecting matching file paths into a `sync.Map` keyed by extension.
+  </Step>
+  <Step title="Per-extension goroutines (throttler)">
+    Each extension group is processed in its own goroutine controlled by a `sema.New(runtime.GOMAXPROCS(0))` semaphore (`throttler`). `GOMAXPROCS` is automatically set to the number of logical CPU cores, so this tier scales with the machine.
+
+    ```go
+    throttler = sema.New(runtime.GOMAXPROCS(0))
+    ```
+  </Step>
+  <Step title="Per-file goroutines (maxFileSemaphore)">
+    Within each extension group, individual files are opened in their own goroutines. The `maxFileSemaphore` (controlled by `-mf`) limits how many files are open at once.
+
+    ```go
+    maxFileSemaphore = sema.New(*figs.Int(kMaxFiles))
+    ```
+  </Step>
+  <Step title="Sequential write">
+    Results are sent to a buffered `resultsChan` and consumed by a single writer goroutine (`receive`). The writer appends file contents to an in-memory buffer and enforces the `-max` size limit atomically before flushing.
+  </Step>
+</Steps>
+
+## Tips for large monorepos
+
+<AccordionGroup>
+  <Accordion title="Use aggressive skip filters">
+    Every entry in the `-s` list is checked against the full file path, so targeting directory names is the fastest way to exclude large trees:
+
+    ```bash
+    summarize -s vendor/,node_modules/,gen/,pb.go,_test.go
+    ```
+
+    You can also persist these with the environment variable:
+
+    ```bash
+    export SUMMARIZE_IGNORE_CONTAINS=vendor/,gen/,testdata/
+    summarize
+    ```
+  </Accordion>
+
+  <Accordion title="Restrict to relevant extensions">
+    The fewer extensions in the include list, the fewer files `filepath.Walk` needs to evaluate:
+
+    ```bash
+    # Go service — skip everything except source and module files
+    summarize -i go,mod
+
+    # Full-stack repo — include only the layers you need
+    summarize -i go,ts,tsx,mod,Makefile
+    ```
+  </Accordion>
+
+  <Accordion title="Increase the output budget">
+    If the summary is being cut short, raise `-max`. The theoretical maximum is 369 GB:
+
+    ```bash
+    # ~50 MB budget
+    summarize -max 50000000
+    ```
+  </Accordion>
+
+  <Accordion title="Target a subdirectory">
+    Use `-d` to run `summarize` against a specific subdirectory instead of the entire repository root:
+
+    ```bash
+    # Summarise only the backend service
+    summarize -d ./services/api
+
+    # Summarise only the frontend
+    summarize -d ./web -i ts,tsx,json
+    ```
+  </Accordion>
+
+  <Accordion title="Reduce concurrency on constrained machines">
+    On CI runners or containers with limited memory, lower `-mf` to reduce peak open file handles:
+
+    ```bash
+    summarize -mf 32
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Filtering files" href="/guides/filtering-files">
+    Use `-i`, `-x`, and `-s` to reduce the file set before hitting the size limit
+  </Card>
+  <Card title="Output formats" href="/guides/output-formats">
+    Compress large summaries with `-gz` to save disk space
+  </Card>
+  <Card title="CLI flags reference" href="/usage/cli-flags">
+    Full reference for `-mf`, `-max`, and `-d`
+  </Card>
+  <Card title="Environment variables" href="/usage/environment-variables">
+    Persist skip filters with `SUMMARIZE_IGNORE_CONTAINS`
+  </Card>
+</CardGroup>

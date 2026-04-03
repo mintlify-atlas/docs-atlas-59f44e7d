@@ -1,97 +1,80 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Summarize"
+description: "Turn any project directory into a single Markdown summary — with an optional AI chat session powered by Ollama."
 ---
 
-## Setting up
+Summarize is a Go CLI tool that recursively scans a project directory and consolidates your source files into a single, well-structured Markdown file. Run it in any repository to instantly generate a complete snapshot of your codebase — then optionally start an interactive AI chat session against that snapshot using Ollama or another LLM provider.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install `summarize` with a single `go install` command. Requires Go 1.24+.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Generate your first project summary in under a minute.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="CLI Flags" icon="terminal" href="/usage/cli-flags">
+    Full reference for every flag: `-d`, `-i`, `-x`, `-s`, `-print`, `-gz`, and more.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="AI Chat" icon="robot" href="/ai/overview">
+    Chat with an LLM about your codebase using the generated summary as context.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## How it works
 
-Everything you need to create world-class documentation.
+<Steps>
+  <Step title="Install the binary">
+    ```bash
+    go install github.com/andreimerlescu/summarize@latest
+    ```
+  </Step>
+  <Step title="Run summarize in your project">
+    ```bash
+    cd ~/work/myproject
+    summarize
+    ```
+    By default, summarize scans the current directory and writes a timestamped Markdown file to `./summaries/`.
+  </Step>
+  <Step title="View your summary">
+    ```bash
+    ls summaries/
+    # summary.2025.07.29.08.59.03.UTC.md
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+    cat summaries/summary.2025.07.29.08.59.03.UTC.md
+    ```
+    Or print directly to STDOUT with `summarize -print`.
+  </Step>
+  <Step title="Start an AI chat session (optional)">
+    ```bash
+    summarize -chat
+    ```
+    Launches an interactive terminal UI powered by Bubble Tea. Ask questions about your codebase — the full summary is used as context for every response.
+  </Step>
+</Steps>
 
-## Need inspiration?
+## Key features
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Concurrent processing" icon="bolt">
+    Files are processed concurrently using Go goroutines and a configurable semaphore. Default: up to 369 files at once.
+  </Card>
+  <Card title="Flexible filtering" icon="filter">
+    Include or exclude files by extension. Skip paths containing specific substrings. Ignore dotfile directories entirely.
+  </Card>
+  <Card title="Multiple output modes" icon="arrow-up-from-bracket">
+    Write to a timestamped file, print to STDOUT, output as JSON, or compress with gzip — mix and match as needed.
+  </Card>
+  <Card title="Config file support" icon="file-code">
+    Store your preferred settings in a YAML or JSON config file so you never have to type flags again.
+  </Card>
+  <Card title="Environment variable overrides" icon="sliders">
+    Every major setting has an environment variable counterpart for CI/CD and shell profile use.
+  </Card>
+  <Card title="Cross-platform" icon="globe">
+    Builds for macOS (Intel + Apple Silicon), Linux (amd64 + arm64), and Windows. One binary, every platform.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Add `summaries/` to your `.gitignore` and `.dockerignore` to keep generated summaries out of version control.
+</Tip>

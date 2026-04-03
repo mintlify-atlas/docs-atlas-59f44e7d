@@ -1,0 +1,92 @@
+---
+title: "AI configuration"
+description: "Tune AI behavior with flags and environment variables"
+---
+
+All AI behavior in summarize is controlled through CLI flags and corresponding environment variables. Flags take precedence when both are set.
+
+## Flags and environment variables
+
+<ParamField path="-ai" type="bool" default="true">
+  Enable AI features. When the environment variable `SUMMARIZE_DISABLE_AI` is set to `true`, AI is disabled. The flag defaults to enabled (`true`) unless the env var overrides it.
+</ParamField>
+
+<ParamField path="-provider" type="string" default="ollama">
+  AI provider name passed to `gollm`. Accepted values include `ollama`, `openai`, and `claude`.
+  Corresponding env var: `SUMMARIZE_AI_PROVIDER`
+</ParamField>
+
+<ParamField path="-model" type="string" default="qwen3:8b">
+  Model identifier for the selected provider. The value is passed directly to `gollm.SetModel`.
+  Corresponding env var: `SUMMARIZE_AI_MODEL`
+</ParamField>
+
+<ParamField path="-api-key" type="string" default='""'>
+  Provider API key. Not required for Ollama. For all other providers, the key is passed to `gollm.SetAPIKey`.
+  Corresponding env var: `SUMMARIZE_AI_API_KEY`
+</ParamField>
+
+<ParamField path="-max-tokens" type="int" default="3000">
+  Maximum number of tokens per LLM response. Values less than or equal to zero disable the limit.
+  Corresponding env var: `SUMMARIZE_AI_MAX_TOKENS`
+</ParamField>
+
+<ParamField path="-seed" type="int" default="-1">
+  Random seed for the LLM. Set to `-1` to use a random seed on every request. Any other value is passed to `gollm.SetSeed`.
+  Corresponding env var: `SUMMARIZE_AI_SEED`
+</ParamField>
+
+<ParamField path="-memory" type="int" default="36963">
+  Context memory size in bytes passed to `gollm.SetMemory`. Controls how much prior context the LLM retains across a conversation.
+  Corresponding env var: `SUMMARIZE_AI_MEMORY`
+</ParamField>
+
+<ParamField path="-caching" type="bool" default="true">
+  Enable LLM response caching via `gollm.SetEnableCaching`. Reduces latency and API costs for repeated or similar prompts.
+  Corresponding env var: `SUMMARIZE_AI_ENABLE_CACHE`
+</ParamField>
+
+<ParamField path="-timeout" type="duration" default="77s">
+  Per-request timeout passed to `gollm.SetTimeout`. If the configured value is less than one second, it falls back to the 77-second default.
+  Corresponding env var: `SUMMARIZE_AI_GLOBAL_TIMEOUT`
+</ParamField>
+
+<ParamField path="-chat" type="bool" default="false">
+  Start an interactive Bubble Tea TUI chat session after summary generation. No corresponding environment variable — must be passed as a flag.
+</ParamField>
+
+## How the system prompt works
+
+When the TUI sends a message, summarize constructs a system prompt that injects the full project summary as context:
+
+```
+This is a summary of a project that you are to respond to user prompts
+with the contents of this project.
+
+<project summary>
+```
+
+The chat history is appended to the prompt on each subsequent message, so the LLM has awareness of the full conversation. The summary itself is also updated with the conversation log prefix before each follow-up request, ensuring continuity across exchanges.
+
+<Note>
+  The `-memory` parameter controls how much context the LLM retains. The default is 36,963 bytes. For large projects or long sessions, increase this value if you notice the model losing track of earlier conversation turns. The maximum accepted value is 17,369,369 bytes.
+</Note>
+
+<Tip>
+  Set `-seed` to a fixed integer when testing to get reproducible responses from the model. This is useful when comparing prompt changes or debugging unexpected output. Use `-seed -1` (the default) to restore random behavior in production.
+</Tip>
+
+## Quick reference
+
+| Flag | Env Var | Type | Default |
+|------|---------|------|---------|
+| `-ai` | `SUMMARIZE_DISABLE_AI` | bool | `true` (enabled) |
+| `-provider` | `SUMMARIZE_AI_PROVIDER` | string | `ollama` |
+| `-model` | `SUMMARIZE_AI_MODEL` | string | `qwen3:8b` |
+| `-api-key` | `SUMMARIZE_AI_API_KEY` | string | `""` |
+| `-max-tokens` | `SUMMARIZE_AI_MAX_TOKENS` | int | `3000` |
+| `-seed` | `SUMMARIZE_AI_SEED` | int | `-1` |
+| `-memory` | `SUMMARIZE_AI_MEMORY` | int | `36963` |
+| `-caching` | `SUMMARIZE_AI_ENABLE_CACHE` | bool | `true` |
+| `-timeout` | `SUMMARIZE_AI_GLOBAL_TIMEOUT` | duration | `77s` |
+| `-chat` | — | bool | `false` |

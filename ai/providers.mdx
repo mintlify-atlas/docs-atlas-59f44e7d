@@ -1,0 +1,87 @@
+---
+title: "AI providers"
+description: "Configure Ollama, OpenAI, Claude, or any gollm-compatible provider"
+---
+
+Summarize uses the [`gollm`](https://github.com/teilomillet/gollm) library to communicate with LLM providers. Any provider supported by `gollm` can be used by setting `-provider` to the appropriate name.
+
+<Warning>
+  For providers other than Ollama, API usage charges apply from the provider. Review your provider's pricing before running large chat sessions.
+</Warning>
+
+## Supported providers
+
+<Tabs>
+  <Tab title="Ollama">
+    Ollama is the default provider. It runs entirely on your local machine and requires no API key.
+
+    **Defaults applied automatically:**
+
+    | Setting | Value |
+    |---------|-------|
+    | Provider | `ollama` |
+    | Model | `qwen3:8b` |
+    | Temperature | `0.99` |
+    | API key | unset (summarize explicitly unsets `OLLAMA_API_KEY`) |
+
+    Ollama must be running at `localhost` before starting a chat session. Start it with:
+
+    ```bash
+    ollama serve
+    ```
+
+    Then run summarize:
+
+    ```bash
+    summarize -chat
+    summarize -chat -model llama3:8b
+    ```
+
+    To change the default model permanently, set the environment variable:
+
+    ```bash
+    export SUMMARIZE_AI_MODEL=llama3:8b
+    summarize -chat
+    ```
+  </Tab>
+  <Tab title="OpenAI">
+    Use OpenAI's models by setting the provider to `openai`. An API key is required.
+
+    Supply the key with the `-api-key` flag or the `SUMMARIZE_AI_API_KEY` environment variable:
+
+    ```bash
+    summarize -chat -provider openai -model gpt-4o -api-key sk-...
+    ```
+
+    Or configure via environment variables:
+
+    ```bash
+    export SUMMARIZE_AI_PROVIDER=openai
+    export SUMMARIZE_AI_MODEL=gpt-4o
+    export SUMMARIZE_AI_API_KEY=sk-...
+    summarize -chat
+    ```
+  </Tab>
+  <Tab title="Claude">
+    Use Anthropic's Claude models by setting the provider to `claude`. An API key is required.
+
+    ```bash
+    summarize -chat -provider claude -model claude-3-5-sonnet-20241022 -api-key sk-ant-...
+    ```
+
+    Or configure via environment variables:
+
+    ```bash
+    export SUMMARIZE_AI_PROVIDER=claude
+    export SUMMARIZE_AI_MODEL=claude-3-5-sonnet-20241022
+    export SUMMARIZE_AI_API_KEY=sk-ant-...
+    summarize -chat
+    ```
+  </Tab>
+</Tabs>
+
+## How provider selection works
+
+When summarize initializes the LLM, it reads the `-provider` flag (or `SUMMARIZE_AI_PROVIDER` env var) and passes it directly to `gollm.SetProvider`. For `ollama`, it additionally unsets `OLLAMA_API_KEY` from the environment and sets temperature to `0.99`. For all other providers, it reads the API key from `-api-key` or `SUMMARIZE_AI_API_KEY` and passes it to `gollm.SetAPIKey`.
+
+See [AI configuration](/ai/configuration) for the full list of flags and environment variables.

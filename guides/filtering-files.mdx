@@ -1,0 +1,173 @@
+---
+title: "Filtering files"
+description: "Control which files are included in your summary using extensions and path filters"
+---
+
+`summarize` applies three independent filtering mechanisms before a file is added to the summary. They run in this order:
+
+1. **Skip path substrings** (`-s`) — drop the file if its path contains a blocked substring
+2. **Exclude extensions** (`-x`) — drop the file if its extension is on the exclusion list
+3. **Include extensions** (`-i`) — keep the file only if its extension is on the inclusion list
+
+Understanding which list is checked first lets you predict exactly which files end up in your summary.
+
+<AccordionGroup>
+  <Accordion title="Include extensions (-i)">
+    Only files whose extension appears in this list are added to the summary. All other files are silently ignored.
+
+    **Default value** (resolved from the `useExpanded` magic — see below):
+
+    ```
+    go, ts, tf, sh, py, js, Makefile, mod, Dockerfile, dockerignore, gitignore, esconfigs, md
+    ```
+
+    **Override at the command line:**
+
+    ```bash
+    # Only Go source and module files
+    summarize -i go,mod
+
+    # TypeScript project
+    summarize -i ts,tsx,json,md
+    ```
+
+    **Extend the defaults with an environment variable:**
+
+    The `SUMMARIZE_INCLUDE_EXT` environment variable appends entries to whatever list is already active — it does not replace it.
+
+    ```bash
+    export SUMMARIZE_INCLUDE_EXT=graphql,proto
+    summarize   # now includes graphql and proto on top of the defaults
+    ```
+
+    Extensions are matched case-insensitively and without the leading dot. Use bare names: `go`, not `.go`.
+  </Accordion>
+
+  <Accordion title="Exclude extensions (-x)">
+    Files whose extension appears in this list are dropped before the include check runs.
+
+    **Default value** (the `useExpanded` extended list) covers:
+
+    - Compressed archives: `7z`, `gz`, `xz`, `zst`, `zip`, `tar`, `rar`, …
+    - Secrets and certificates: `crt`, `key`, `pem`, `p12`, `id_rsa`, `gpg`, …
+    - Binary and executable artifacts: `exe`, `dll`, `so`, `dylib`, `bin`, `class`, `pyc`, `wasm`, …
+    - System and disk images: `iso`, `img`, `dmg`, `vmdk`, …
+    - Database files: `db`, `sqlite`, `sqlite3`, `mdb`, …
+    - Log files: `log`, `trace`, `dump`, `crash`
+    - Media (images, audio, video): `jpg`, `png`, `gif`, `mp3`, `mp4`, `mov`, …
+    - Font files: `ttf`, `otf`, `woff`, `woff2`, …
+    - Office documents: `pdf`, `doc`, `docx`, `xls`, `ppt`, …
+    - IDE artifacts: `suo`, `iml`, `pbxproj`, `DS_Store`, …
+    - Build artifacts: `lock`, `sum`, `resolved`, `map`, `min.js`, …
+    - Temporary files: `tmp`, `swp`, `bak`, `orig`, …
+    - Binary data formats: `pickle`, `pkl`, `npy`, `mat`, …
+
+    **Add your own exclusions with an environment variable:**
+
+    ```bash
+    export SUMMARIZE_EXCLUDE_EXT=csv,xlsx
+    summarize
+    ```
+
+    Like the include variable, `SUMMARIZE_EXCLUDE_EXT` appends to the active list.
+  </Accordion>
+
+  <Accordion title="Skip path substrings (-s)">
+    If any portion of a file's full path contains one of these strings, the file is skipped entirely — no extension check is performed.
+
+    **Default value** (resolved from `useExpanded`):
+
+    ```
+    .min.js, .min.css, .git/, .svn/, .vscode/, .vs/, .idea/,
+    logs/, secrets/, .venv/, /site-packages, .terraform/,
+    summaries/, node_modules/, /tmp, tmp/, logs/
+    ```
+
+    **Override at the command line:**
+
+    ```bash
+    # Skip vendor directory and any generated protobuf output
+    summarize -s vendor/,gen/,pb.go
+    ```
+
+    **Extend with an environment variable:**
+
+    ```bash
+    export SUMMARIZE_IGNORE_CONTAINS=fixtures/,testdata/
+    summarize
+    ```
+
+    The `SUMMARIZE_IGNORE_CONTAINS` variable appends to whatever skip list is active.
+  </Accordion>
+
+  <Accordion title="Dotfile directories (-ndf)">
+    By default, `summarize` **includes** dotfiles in the scan. Pass `-ndf` (No Dot Files) to skip any file whose name begins with `.`.
+
+    ```bash
+    # Exclude all dotfiles (.env, .eslintrc, .prettierrc, etc.)
+    summarize -ndf
+    ```
+
+    <Warning>
+      Without `-ndf`, dotfiles such as `.env` are included in the summary if they match the include extension list. If your project contains credentials in dotfiles, either pass `-ndf` or add specific entries to the `-s` skip list.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="useExpanded magic value">
+    Setting any of the three list flags to the literal string `useExpanded` enables the extended built-in defaults for that list. This is the out-of-the-box behaviour when no explicit flag is provided.
+
+    ```bash
+    # Explicitly request the full extended include list
+    summarize -i useExpanded
+
+    # Explicitly request the full extended exclude list
+    summarize -x useExpanded
+
+    # Explicitly request the full extended skip list
+    summarize -s useExpanded
+    ```
+
+    Passing `useExpanded` is equivalent to omitting the flag entirely. It is most useful if you want to restore a single list to its defaults after overriding the others.
+  </Accordion>
+</AccordionGroup>
+
+## Practical examples
+
+```bash
+# Only Go source files
+summarize -i go,mod
+
+# Include TypeScript, skip test directories
+summarize -i ts,tsx -s spec,test,__tests__
+
+# Exclude dotfiles (e.g. .env, .eslintrc, .prettierrc)
+summarize -ndf
+
+# Extend the default include list with GraphQL and Protobuf
+export SUMMARIZE_INCLUDE_EXT=graphql,proto
+summarize
+
+# Extend the skip list to also ignore fixtures and vendor trees
+export SUMMARIZE_IGNORE_CONTAINS=fixtures/,vendor/
+summarize
+
+# Combine: Go only, skip vendor, write to file
+summarize -i go,mod -s vendor/ -write
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Default include list" href="/reference/default-includes">
+    Full `extendedDefaultInclude` list from source
+  </Card>
+  <Card title="Default exclude list" href="/reference/default-excludes">
+    Full `extendedDefaultExclude` list from source
+  </Card>
+  <Card title="Environment variables" href="/usage/environment-variables">
+    Persist filter settings with `SUMMARIZE_INCLUDE_EXT`, `SUMMARIZE_EXCLUDE_EXT`, and `SUMMARIZE_IGNORE_CONTAINS`
+  </Card>
+  <Card title="CLI flags reference" href="/usage/cli-flags">
+    Complete reference for `-i`, `-x`, `-s`, and `-ndf`
+  </Card>
+</CardGroup>

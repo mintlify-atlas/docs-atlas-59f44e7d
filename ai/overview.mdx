@@ -1,0 +1,81 @@
+---
+title: "AI chat overview"
+description: "Interactive TUI chat session powered by your project summary"
+---
+
+The AI chat feature generates a full project summary, then launches an interactive [Bubble Tea](https://github.com/charmbracelet/bubbletea) TUI chat session using that summary as the LLM's context. You can ask questions about your codebase, request code reviews, or explore security and best-practice concerns — all without leaving the terminal.
+
+<Note>
+  AI chat requires Ollama running locally by default. If you want to use a different provider, configure it with `-provider` and `-api-key` before starting. See [AI providers](/ai/providers) for details.
+</Note>
+
+## Starting the chat
+
+```bash
+summarize -chat
+summarize -write -chat
+summarize -i go,ts -chat -model qwen3:8b
+```
+
+The `-chat` flag triggers summary generation followed immediately by the TUI session. Combine it with any other summarize flags to control what goes into the summary context.
+
+## Workflow
+
+<Steps>
+  <Step title="Run summarize -chat">
+    Execute `summarize -chat` from your project directory. Summarize scans the directory and collects file contents according to your include/exclude settings.
+  </Step>
+  <Step title="Wait for summary generation">
+    Summarize processes files concurrently and builds the project summary that will be injected as the LLM's system prompt context.
+  </Step>
+  <Step title="TUI opens">
+    The Bubble Tea TUI launches in alternate-screen mode. A welcome message confirms the number of bytes analyzed from your project.
+  </Step>
+  <Step title="Chat with the AI">
+    Type a message in the input area at the bottom of the screen and press **Enter** to send. The AI responds using your project summary as context and maintains chat history across the session.
+  </Step>
+  <Step title="Exit the session">
+    Press **Esc** or **Ctrl+C** to quit the TUI at any time.
+  </Step>
+  <Step title="Chat log saved">
+    If the session contained more than one message (the welcome message plus at least one exchange), the full conversation is saved as `chatlog_<timestamp>.md` in the output directory.
+  </Step>
+</Steps>
+
+## TUI interface
+
+The interface is split into two areas:
+
+- **Scrolling viewport** — displays the full chat history. Content is word-wrapped to fit the terminal width.
+- **Textarea** — the input field at the bottom. Press **Enter** to send. While the AI is generating a response, the textarea is replaced with a "Thinking..." indicator.
+
+| Key | Action |
+|-----|--------|
+| Enter | Send message |
+| Esc | Quit |
+| Ctrl+C | Quit |
+
+## AI persona
+
+The AI is named **Summarize**. It refers to you as **Commander**, speaks professionally and directly, and is instructed to give honest, unfiltered technical feedback without softening criticism. It stays focused on the languages and patterns it detects from the summary.
+
+## Chat log
+
+After quitting, if the session included at least one exchange, a Markdown file is written to the configured output directory:
+
+```
+chatlog_2025-07-29_08-59-03.md
+```
+
+The file contains the full conversation history in the order messages were received.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="AI providers" icon="server" href="/ai/providers">
+    Configure Ollama, OpenAI, Claude, or any gollm-compatible provider.
+  </Card>
+  <Card title="AI configuration" icon="sliders" href="/ai/configuration">
+    Tune AI behavior with flags and environment variables.
+  </Card>
+</CardGroup>
